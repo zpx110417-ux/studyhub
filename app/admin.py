@@ -150,13 +150,16 @@ def reports():
     rows = get_db().execute(
         "SELECT rep.*, ru.username AS reporter, tu.username AS target, "
         "p.title AS page_title, p.id AS pid, "
-        "q.title AS question_title, q.id AS qid, a.question_id AS aqid "
+        "q.title AS question_title, q.id AS qid, a.question_id AS aqid, "
+        "pc.post_id AS pc_post_id "
         "FROM reports rep "
         "LEFT JOIN users ru ON ru.id=rep.reporter_id "
         "JOIN users tu ON tu.id=rep.target_user_id "
         "LEFT JOIN pages p ON p.id=rep.page_id "
         "LEFT JOIN questions q ON q.id=rep.question_id "
         "LEFT JOIN answers a ON a.id=rep.answer_id "
+        "LEFT JOIN posts po ON po.id=rep.post_id "
+        "LEFT JOIN post_comments pc ON pc.id=rep.post_comment_id "
         "ORDER BY CASE rep.status WHEN 'pending' THEN 0 ELSE 1 END, rep.id DESC"
     ).fetchall()
     return render_template("admin/reports.html", rows=rows, ban_days=BAN_DAY_CHOICES)
@@ -179,7 +182,8 @@ def dismiss_report(report_id):
 def _report_evidence(db, report_id):
     """抓取被举报内容的原文快照，作为封禁依据存入封禁记录，供申诉审批时参考。"""
     rep = db.execute(
-        "SELECT page_id, question_id, answer_id FROM reports WHERE id=?", (report_id,)
+        "SELECT page_id, question_id, answer_id, post_id, post_comment_id FROM reports WHERE id=?",
+        (report_id,),
     ).fetchone()
     if rep is None:
         return ""
@@ -194,6 +198,14 @@ def _report_evidence(db, report_id):
     elif rep["answer_id"]:
         row = db.execute(
             "SELECT content_md FROM answers WHERE id=?", (rep["answer_id"],)
+        ).fetchone()
+    elif rep["post_id"]:
+        row = db.execute(
+            "SELECT content_md FROM posts WHERE id=?", (rep["post_id"],)
+        ).fetchone()
+    elif rep["post_comment_id"]:
+        row = db.execute(
+            "SELECT content_md FROM post_comments WHERE id=?", (rep["post_comment_id"],)
         ).fetchone()
     else:
         row = None
@@ -515,6 +527,51 @@ def delete_question(question_id):
     db.commit()
     flash(f"问答帖《{row['title']}》已删除，删除信息已公示。", "success")
     return redirect(url_for("qa.list_questions"))
+
+
+@bp.route("/posts/<int:post_id>/delete", methods=("POST",))
+@admin_required
+def delete_post(post_id):
+    reason = request.form.get("reason", "").strip()
+    if not reason:
+        flash("删除必须给出理由，理由将公开发布到删除公示。", "danger")
+        return redirect(url_for("newspaper.index"))
+    db = get_db()
+    row = db.execute("SELECT content_md FROM posts WHERE id=?", (post_id,)).fetchone()
+    if row is None:
+        abort(404)
+    title = (row["content_md"].splitlines()[0] if row["content_md"] else "")[:30] or "（无文字内容）"
+    _record_deletion(db, "post", f"报刊动态：{title}…", reason)
+    db.execute("DELETE FROM posts WHERE id=?", (post_id,))  # 点赞与评论级联删除
+    db.commit()
+    flash("报刊动态已删除，删除信息已公示。", "success")
+    return redirect(url_for("newspaper.index"))
+
+
+@bp.route("/post-comments/<int:comment_id>/delete", methods=("POST",))
+@admin_required
+def delete_post_comment(comment_id):
+    reason = request.form.get("reason", "").strip()
+    if not reason:
+        flash("删除必须给出理由，理由将公开发布到删除公示。", "danger")
+        return redirect(url_for("newspaper.index"))
+    db = get_db()
+    row = db.execute(
+        "SELECT c.content_md, p.id AS pid, p.content_md AS post_md "
+        "FROM post_comments c JOIN posts p ON p.id=c.post_id WHERE c.id=?",
+        (comment_id,),
+    ).fetchone()
+    if row is None:
+        abort(404)
+    post_title = (row["post_md"].splitlines()[0] if row["post_md"] else "")[:20] or "无标题动态"
+    title = (row["content_md"].splitlines()[0] if row["content_md"] else "")[:30]
+    _record_deletion(
+        db, "post_comment", f"报刊评论（对动态《{post_title}…》的评论）：{title}…", reason,
+    )
+    db.execute("DELETE FROM post_comments WHERE id=?", (comment_id,))
+    db.commit()
+    flash("评论已删除，删除信息已公示。", "success")
+    return redirect(url_for("newspaper.index"))
 
 
 # ---------- 意见箱（匿名，全部管理员共见） ----------

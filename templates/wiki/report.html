@@ -10,8 +10,12 @@
       页面 <a href="{{ url_for('wiki.view', page_id=row['id']) }}">{{ row['title'] }}</a>
     {% elif kind == 'question' %}
       问题 <a href="{{ url_for('qa.detail', question_id=row['id']) }}">{{ row['title'] }}</a>
-    {% else %}
+    {% elif kind == 'answer' %}
       <a href="{{ url_for('qa.detail', question_id=row['qid']) }}">一条回答</a>
+    {% elif kind == 'post' %}
+      <a href="{{ url_for('newspaper.index') }}">报刊动态</a>（{{ row['content_md'][:40] }}…）
+    {% else %}
+      <a href="{{ url_for('newspaper.index') }}">报刊评论</a>（{{ row['content_md'][:40] }}…）
     {% endif %}
   </p>
   <p class="muted">请描述该内容违反了使用规则的哪一条，管理员会尽快处理。恶意举报也会被处罚。</p>

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}我的账户{% endblock %}
+{% block content %}
+<h1>我的账户</h1>
+
+<div class="card">
+  <h3>{{ user['username'] }}</h3>
+  <p class="muted">
+    {{ '管理员' if user['role'] == 'admin' else '普通用户' }} · 注册于 {{ user['created_at'] }}
+  </p>
+  {% if user['signature'] %}<p>个性签名：{{ user['signature'] }}</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>更改登录密码</h3>
+  <form method="post" action="{{ url_for('auth.change_password') }}" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>旧密码<input type="password" name="old_password" required></label>
+    <label>新密码<input type="password" name="new_password" required></label>
+    <label>确认新密码<input type="password" name="confirm_password" required></label>
+    <button class="btn btn-primary" type="submit">确认修改</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>个性签名</h3>
+  <form method="post" action="{{ url_for('auth.change_signature') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>签名内容（不超过 50 字，留空则清空）
+      <textarea name="signature" rows="3" maxlength="50" placeholder="写一句展示给大家的话…">{{ user['signature'] }}</textarea>
+    </label>
+    <button class="btn btn-primary" type="submit">保存签名</button>
+  </form>
+</div>
+{% endblock %}

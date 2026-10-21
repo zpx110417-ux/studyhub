@@ -131,6 +131,7 @@ table select, table input { width: auto; padding: 4px 8px; }
 
 /* Markdown 正文 */
 .md-body img { max-width: 100%; }
+.comment-row { border-left: 3px solid var(--border); padding-left: 12px; margin: 8px 0; }
 .md-body pre {
   background: #f0f3f6; padding: 12px; border-radius: 6px; overflow-x: auto;
 }

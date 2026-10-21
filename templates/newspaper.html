@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}报刊{% endblock %}
+{% block content %}
+<h1>报刊</h1>
+<p class="muted">像朋友圈一样分享你的日常：可实名或匿名发布文字和图片，大家可以点赞和评论。</p>
+
+{% if current_user %}
+<div class="card">
+  <form method="post" action="{{ url_for('newspaper.create') }}" class="editor-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="editor-toolbar">
+      <button type="button" data-md="bold"><b>B</b></button>
+      <button type="button" data-md="italic"><i>I</i></button>
+      <button type="button" data-md="h2">H2</button>
+      <button type="button" data-md="quote">&gt; 引用</button>
+      <label class="upload-btn">插图<input id="upload-image" type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden></label>
+    </div>
+    <div class="editor-grid">
+      <label>说点什么…（Markdown，可插图）
+        <textarea id="content" name="content" rows="4" required></textarea>
+      </label>
+      <div class="preview-wrap">
+        <span class="muted">实时预览</span>
+        <div id="preview" class="md-body"></div>
+      </div>
+    </div>
+    <label class="inline">
+      <input type="checkbox" name="anonymous" value="1" style="width:auto"> 匿名发布（管理员仍可追溯）
+    </label>
+    <button class="btn btn-primary" type="submit">发布到报刊</button>
+  </form>
+</div>
+{% else %}
+<p class="muted"><a href="{{ url_for('auth.login') }}">登录</a>后可以发布动态、点赞和评论。</p>
+{% endif %}
+
+{% for p in posts %}
+<article class="card md-body {% if p['status'] == 'hidden' %}item-hidden{% endif %}">
+  <p class="muted">
+    {% if p['anonymous'] %}
+      匿名{% if is_admin %}（真实作者：<b>{{ p['author'] }}</b>）{% endif %}
+    {% else %}
+      <b>{{ p['author'] }}</b>{% if p['author_signature'] %} · <i>{{ p['author_signature'] }}</i>{% endif %}
+    {% endif %}
+    · {{ p['created_at'] }}
+    {% if p['status'] == 'hidden' %}<span class="tag tag-bad">已被系统隐藏</span>{% endif %}
+  </p>
+  {{ p['content_html'] | safe }}
+
+  <div class="toolbar-row">
+    {% if current_user %}
+      <form method="post" action="{{ url_for('newspaper.like', post_id=p['id']) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn">{{ '❤ 已赞' if p['liked_by_me'] else '♡ 点赞' }} {{ p['n_likes'] }}</button>
+      </form>
+      <a class="btn" href="{{ url_for('wiki.report', post_id=p['id']) }}">举报</a>
+    {% else %}
+      <span class="tag tag-muted">♡ {{ p['n_likes'] }}</span>
+    {% endif %}
+    {% if is_admin %}
+      <details class="inline">
+        <summary class="linklike">删除此帖</summary>
+        <form method="post" action="{{ url_for('admin.delete_post', post_id=p['id']) }}" class="ban-form"
+              onsubmit="return confirm('确定删除该报刊帖吗？删除信息（内容摘要/理由/删除者）将公开公示，不可恢复！')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input name="reason" placeholder="删除理由（将公开公示）" required>
+          <button class="btn btn-bad" type="submit">确认删除</button>
+        </form>
+      </details>
+    {% endif %}
+  </div>
+
+  <h4>{{ p['n_comments'] }} 条评论</h4>
+  {% for c in comments.get(p['id'], []) %}
+    <div class="comment-row">
+      <p class="muted"><b>{{ c['author'] }}</b> · {{ c['created_at'] }}</p>
+      <div class="md-body">{{ c['content_html'] | safe }}</div>
+      <p>
+        {% if current_user %}
+          <a class="muted" href="{{ url_for('wiki.report', post_comment_id=c['id']) }}">举报此评论</a>
+        {% endif %}
+        {% if is_admin %}
+          <details class="inline">
+            <summary class="linklike">删除评论</summary>
+            <form method="post" action="{{ url_for('admin.delete_post_comment', comment_id=c['id']) }}" class="ban-form"
+                  onsubmit="return confirm('确定删除该评论吗？删除信息将公开公示，不可恢复！')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input name="reason" placeholder="删除理由（将公开公示）" required>
+              <button class="btn btn-bad" type="submit">确认删除</button>
+            </form>
+          </details>
+        {% endif %}
+      </p>
+    </div>
+  {% else %}
+    <p class="muted">还没有评论。</p>
+  {% endfor %}
+
+  {% if current_user %}
+    <form method="post" action="{{ url_for('newspaper.comment', post_id=p['id']) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input name="content" placeholder="写评论…" required style="min-width:60%">
+      <button class="btn" type="submit">评论</button>
+    </form>
+  {% endif %}
+</article>
+{% else %}
+<p class="muted">报刊还没有内容，来发第一条动态吧。</p>
+{% endfor %}
+{% endblock %}
+{% block scripts %}
+{% if current_user %}
+<script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endif %}
+{% endblock %}

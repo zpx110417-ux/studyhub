@@ -1,7 +1,10 @@
--- StudyHub 数据库结构（12 张表）
+-- StudyHub 数据库结构（16 张表）
 -- 约定：时间统一存 SQLite datetime('now','localtime') 输出的 TEXT 格式 YYYY-MM-DD HH:MM:SS
 --       日期（如 last_reject_date / last_scan_date）存 date('now','localtime') 的 YYYY-MM-DD
 
+DROP TABLE IF EXISTS post_likes;
+DROP TABLE IF EXISTS post_comments;
+DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS deletions;
 DROP TABLE IF EXISTS appeals;
 DROP TABLE IF EXISTS bans;
@@ -20,6 +23,7 @@ CREATE TABLE users (
     username      TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role          TEXT NOT NULL DEFAULT 'user',   -- user | admin
+    signature     TEXT NOT NULL DEFAULT '',       -- 个性签名（≤50 字，账户页自填）
     created_at    TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
@@ -103,19 +107,53 @@ CREATE TABLE files (
     created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+-- 报刊（朋友圈式：实名/匿名发帖，文字+图片，可点赞与评论）
+CREATE TABLE posts (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    author_id    INTEGER NOT NULL REFERENCES users(id),
+    anonymous    INTEGER NOT NULL DEFAULT 0,     -- 1 = 对外匿名展示（管理员后台仍可见真实作者）
+    content_md   TEXT NOT NULL,
+    content_html TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL DEFAULT 'visible', -- visible | hidden
+    created_at   TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX idx_posts_time ON posts(created_at DESC);
+
+-- 报刊点赞（一人一帖最多一赞，再点取消）
+CREATE TABLE post_likes (
+    post_id    INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    PRIMARY KEY (post_id, user_id)
+);
+
+-- 报刊评论
+CREATE TABLE post_comments (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id      INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    author_id    INTEGER NOT NULL REFERENCES users(id),
+    content_md   TEXT NOT NULL,
+    content_html TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL DEFAULT 'visible', -- visible | hidden
+    created_at   TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX idx_comments_post ON post_comments(post_id);
+
 -- 举报（reporter_id 为 NULL 表示系统识别）
 CREATE TABLE reports (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    reporter_id    INTEGER REFERENCES users(id),
-    target_user_id INTEGER NOT NULL REFERENCES users(id),
-    page_id        INTEGER REFERENCES pages(id) ON DELETE SET NULL,
-    question_id    INTEGER REFERENCES questions(id) ON DELETE SET NULL,
-    answer_id      INTEGER REFERENCES answers(id) ON DELETE SET NULL,
-    reason         TEXT NOT NULL,
-    status         TEXT NOT NULL DEFAULT 'pending', -- pending | dismissed | actioned
-    handled_by     INTEGER REFERENCES users(id),
-    handled_at     TEXT,
-    created_at     TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    reporter_id     INTEGER REFERENCES users(id),
+    target_user_id  INTEGER NOT NULL REFERENCES users(id),
+    page_id         INTEGER REFERENCES pages(id) ON DELETE SET NULL,
+    question_id     INTEGER REFERENCES questions(id) ON DELETE SET NULL,
+    answer_id       INTEGER REFERENCES answers(id) ON DELETE SET NULL,
+    post_id         INTEGER REFERENCES posts(id) ON DELETE SET NULL,
+    post_comment_id INTEGER REFERENCES post_comments(id) ON DELETE SET NULL,
+    reason          TEXT NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'pending', -- pending | dismissed | actioned
+    handled_by      INTEGER REFERENCES users(id),
+    handled_at      TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 CREATE INDEX idx_reports_status ON reports(status, created_at DESC);
 

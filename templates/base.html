@@ -13,6 +13,7 @@
     <a class="brand" href="{{ url_for('wiki.index') }}">学习库</a>
     <a href="{{ url_for('wiki.index') }}">页面</a>
     <a href="{{ url_for('qa.list_questions') }}">问答</a>
+    <a href="{{ url_for('newspaper.index') }}">报刊</a>
     <a href="{{ url_for('wiki.rules') }}">使用规则</a>
     <a href="{{ url_for('wiki.deletions') }}">删除公示</a>
     <a href="{{ url_for('wiki.suggestion') }}">意见箱</a>
@@ -24,7 +25,7 @@
       {% if current_user['role'] == 'admin' %}
         <a href="{{ url_for('admin.index') }}">管理后台</a>
       {% endif %}
-      <span class="muted">{{ current_user['username'] }}</span>
+      <a class="muted" href="{{ url_for('auth.account') }}">{{ current_user['username'] }}</a>
       <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="linklike">退出</button>

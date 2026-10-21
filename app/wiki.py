@@ -360,8 +360,10 @@ def report():
     page_id = request.values.get("page_id", type=int)
     question_id = request.values.get("question_id", type=int)
     answer_id = request.values.get("answer_id", type=int)
+    post_id = request.values.get("post_id", type=int)
+    post_comment_id = request.values.get("post_comment_id", type=int)
 
-    target, target_user_id = None, None
+    target, target_user_id, back = None, None, url_for("wiki.index")
     if page_id:
         row = db.execute(
             "SELECT id, title, author_id FROM pages WHERE id=? AND status='published'",
@@ -369,6 +371,7 @@ def report():
         ).fetchone()
         if row:
             target, target_user_id = ("page", row), row["author_id"]
+            back = url_for("wiki.view", page_id=page_id)
     elif question_id:
         row = db.execute(
             "SELECT id, title, author_id FROM questions WHERE id=? AND status!='hidden'",
@@ -376,6 +379,7 @@ def report():
         ).fetchone()
         if row:
             target, target_user_id = ("question", row), row["author_id"]
+            back = url_for("qa.detail", question_id=question_id)
     elif answer_id:
         row = db.execute(
             "SELECT a.id, a.author_id, a.content_md, q.id AS qid, q.title FROM answers a "
@@ -385,6 +389,25 @@ def report():
         ).fetchone()
         if row:
             target, target_user_id = ("answer", row), row["author_id"]
+            back = url_for("qa.detail", question_id=row["qid"])
+    elif post_id:
+        row = db.execute(
+            "SELECT id, author_id, content_md FROM posts WHERE id=? AND status='visible'",
+            (post_id,),
+        ).fetchone()
+        if row:
+            target, target_user_id = ("post", row), row["author_id"]
+            back = url_for("newspaper.index")
+    elif post_comment_id:
+        row = db.execute(
+            "SELECT c.id, c.author_id, c.content_md, p.id AS pid FROM post_comments c "
+            "JOIN posts p ON p.id=c.post_id "
+            "WHERE c.id=? AND c.status='visible' AND p.status='visible'",
+            (post_comment_id,),
+        ).fetchone()
+        if row:
+            target, target_user_id = ("post_comment", row), row["author_id"]
+            back = url_for("newspaper.index")
     if target is None:
         abort(404)
 
@@ -393,24 +416,25 @@ def report():
         if not reason:
             flash("请填写举报理由。", "danger")
         else:
+            kind = target[0]
             db.execute(
-                "INSERT INTO reports (reporter_id, target_user_id, page_id, question_id, answer_id, reason) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO reports (reporter_id, target_user_id, page_id, question_id, answer_id, "
+                "post_id, post_comment_id, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     current_user()["id"], target_user_id,
-                    page_id if target[0] == "page" else None,
-                    question_id if target[0] in ("question", "answer") else (
-                        target[1]["qid"] if target[0] == "answer" else None),
-                    answer_id if target[0] == "answer" else None,
+                    page_id if kind == "page" else None,
+                    question_id if kind in ("question", "answer") else (
+                        target[1]["qid"] if kind == "answer" else None),
+                    answer_id if kind == "answer" else None,
+                    post_id if kind == "post" else None,
+                    post_comment_id if kind == "post_comment" else None,
                     reason,
                 ),
             )
             db.commit()
             flash("举报已提交，管理员会尽快处理。", "success")
-            if target[0] == "page":
-                return redirect(url_for("wiki.view", page_id=page_id))
-            return redirect(url_for("qa.detail", question_id=question_id or target[1]["qid"]))
-    return render_template("wiki/report.html", kind=target[0], row=target[1])
+            return redirect(back)
+    return render_template("wiki/report.html", kind=target[0], row=target[1], back=back)
 
 
 # ---------- 申诉（封禁异议） ----------

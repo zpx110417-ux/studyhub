@@ -58,8 +58,14 @@
   <h3>写回答</h3>
   <form method="post" action="{{ url_for('qa.answer', question_id=q['id']) }}" class="editor-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="editor-toolbar">
+      <button type="button" data-md="bold"><b>B</b></button>
+      <button type="button" data-md="italic"><i>I</i></button>
+      <button type="button" data-md="ul">• 列表</button>
+      <label class="upload-btn">插图<input id="upload-image" type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden></label>
+    </div>
     <div class="editor-grid">
-      <label>回答内容（Markdown）
+      <label>回答内容（Markdown，可插图）
         <textarea id="content" name="content" rows="6" required></textarea>
       </label>
       <div class="preview-wrap">

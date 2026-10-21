@@ -10,7 +10,7 @@
     {% for d in rows %}
     <tr>
       <td>{{ d['title'] }}</td>
-      <td>{{ '学习页面' if d['target_type'] == 'page' else '问答帖' }}</td>
+      <td>{{ {'page': '学习页面', 'question': '问答帖', 'post': '报刊动态', 'post_comment': '报刊评论'}.get(d['target_type'], d['target_type']) }}</td>
       <td>{{ d['reason'] }}</td>
       <td>{{ d['admin_name'] }}</td>
       <td>{{ d['created_at'] }}</td>

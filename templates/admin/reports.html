@@ -23,6 +23,10 @@
       涉及回答：<a href="{{ url_for('qa.detail', question_id=r['aqid']) }}">查看</a>
     {% elif r['qid'] %}
       涉及问题：<a href="{{ url_for('qa.detail', question_id=r['qid']) }}">{{ r['question_title'] }}</a>
+    {% elif r['post_id'] %}
+      涉及报刊动态：<a href="{{ url_for('newspaper.index') }}">查看</a>
+    {% elif r['post_comment_id'] %}
+      涉及报刊评论：<a href="{{ url_for('newspaper.index') }}">查看</a>
     {% else %}（内容已删除）{% endif %}
   </p>
   <p><strong>理由：</strong>{{ r['reason'] }}</p>

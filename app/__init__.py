@@ -21,14 +21,14 @@ def create_app():
     os.makedirs(app.instance_path, exist_ok=True)
     os.makedirs(app.config["UPLOAD_DIR"], exist_ok=True)
 
-    from . import db, auth, wiki, qa, uploads, admin, moderation
-
+    from . import db, auth, wiki, qa, uploads, admin, moderation, newspaper
     db.init_app(app)
     app.register_blueprint(auth.bp)
     app.register_blueprint(wiki.bp)
     app.register_blueprint(qa.bp)
     app.register_blueprint(uploads.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(newspaper.bp)
     moderation.init_app(app)  # 注册 auto-moderate CLI 命令
 
     @app.before_request

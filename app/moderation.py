@@ -35,18 +35,21 @@ def check_high(text):
     return None
 
 
-def flag_low(text, author_id, page_id=None, question_id=None, answer_id=None):
+def flag_low(text, author_id, page_id=None, question_id=None, answer_id=None,
+             post_id=None, post_comment_id=None):
     """中危词检查：命中自动生成系统举报（交管理员复核），不影响内容保存。"""
     hits = scan_text(text, get_words("low"))
     if hits:
         get_db().execute(
-            "INSERT INTO reports (reporter_id, target_user_id, page_id, question_id, answer_id, reason) "
-            "VALUES (NULL, ?, ?, ?, ?, ?)",
+            "INSERT INTO reports (reporter_id, target_user_id, page_id, question_id, answer_id, "
+            "post_id, post_comment_id, reason) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)",
             (
                 author_id,
                 page_id,
                 question_id,
                 answer_id,
+                post_id,
+                post_comment_id,
                 f"系统识别：内容包含需人工复核的词语（{', '.join(hits[:5])}）",
             ),
         )

@@ -10,7 +10,7 @@ from flask import (
     session,
     url_for,
 )
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import get_db
 from .helpers import current_user, get_active_ban, login_required
@@ -88,3 +88,52 @@ def logout():
     session.clear()
     flash("已退出登录。", "success")
     return redirect(url_for("wiki.index"))
+
+
+# ---------- 账户页：改密码 / 个性签名 ----------
+
+@bp.route("/me", methods=("GET",))
+@login_required
+def account():
+    user = current_user()
+    return render_template("auth/account.html", user=user)
+
+
+@bp.route("/me/password", methods=("POST",))
+@login_required
+def change_password():
+    old = request.form.get("old_password", "")
+    new = request.form.get("new_password", "")
+    confirm = request.form.get("confirm_password", "")
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE id=?", (current_user()["id"],)).fetchone()
+    if not check_password_hash(user["password_hash"], old):
+        flash("旧密码不正确。", "danger")
+    elif len(new) < 6:
+        flash("新密码至少 6 位。", "danger")
+    elif new != confirm:
+        flash("两次输入的新密码不一致。", "danger")
+    elif old == new:
+        flash("新密码不能与旧密码相同。", "warning")
+    else:
+        db.execute(
+            "UPDATE users SET password_hash=? WHERE id=?",
+            (generate_password_hash(new, method="pbkdf2:sha256"), user["id"]),
+        )
+        db.commit()
+        flash("登录密码已修改。", "success")
+    return redirect(url_for("auth.account"))
+
+
+@bp.route("/me/signature", methods=("POST",))
+@login_required
+def change_signature():
+    signature = request.form.get("signature", "").strip()
+    if len(signature) > 50:
+        flash("个性签名不能超过 50 字。", "danger")
+    else:
+        db = get_db()
+        db.execute("UPDATE users SET signature=? WHERE id=?", (signature, current_user()["id"]))
+        db.commit()
+        flash("个性签名已保存。" if signature else "个性签名已清空。", "success")
+    return redirect(url_for("auth.account"))
