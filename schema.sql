@@ -23,8 +23,9 @@ CREATE TABLE users (
     username      TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role          TEXT NOT NULL DEFAULT 'user',   -- user | admin
-    signature     TEXT NOT NULL DEFAULT '',       -- 个性签名（≤50 字，账户页自填）
-    created_at    TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    signature      TEXT NOT NULL DEFAULT '',       -- 个性签名（≤50 字，账户页自填）
+    last_active_at TEXT,                            -- 最后活跃时间（10 分钟内算在线）
+    created_at     TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
 -- 学习库页面（审批制发布）

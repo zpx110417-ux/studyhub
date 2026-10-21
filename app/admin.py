@@ -38,7 +38,10 @@ def index():
         "pending_suggestions": db.execute(
             "SELECT COUNT(*) FROM suggestions WHERE handled=0").fetchone()[0],
     }
-    return render_template("admin/index.html", stats=stats)
+    from .helpers import online_users
+
+    online = online_users()
+    return render_template("admin/index.html", stats=stats, online=online)
 
 
 # ---------- 页面审批 ----------

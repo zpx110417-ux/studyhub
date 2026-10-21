@@ -61,6 +61,13 @@ def create_app():
         if get_active_ban(user["id"]) is not None:
             return redirect(url_for("auth.banned"))
 
+    @app.before_request
+    def mark_active():
+        # 登录用户刷新最后活跃时间（用于在线人数统计）
+        from .helpers import touch_active
+
+        touch_active()
+
     @app.after_request
     def set_security_headers(resp):
         resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
@@ -79,12 +86,18 @@ def create_app():
     def error_page(e):
         return render_template("errors.html", code=e.code, message=e.description), e.code
 
-    from .helpers import current_user, get_active_ban, generate_csrf
+    from .helpers import current_user, get_active_ban, generate_csrf, online_users
 
     @app.context_processor
     def inject_globals():
         user = current_user()
         ban = get_active_ban(user["id"]) if user else None
-        return {"current_user": user, "active_ban": ban, "csrf_token": generate_csrf}
+        online = online_users()
+        return {
+            "current_user": user,
+            "active_ban": ban,
+            "csrf_token": generate_csrf,
+            "online_count": len(online),
+        }
 
     return app

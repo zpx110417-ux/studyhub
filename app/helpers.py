@@ -20,6 +20,34 @@ def current_user():
     return g.user
 
 
+# ---------- 在线人数（10 分钟内有过请求的登录用户） ----------
+
+ACTIVE_WINDOW_MINUTES = 10
+
+
+def touch_active():
+    """登录用户每次请求时刷新最后活跃时间；跳过静态资源。"""
+    user = current_user()
+    if user is None:
+        return
+    if request.endpoint == "static":
+        return
+    get_db().execute(
+        "UPDATE users SET last_active_at=datetime('now','localtime') WHERE id=?",
+        (user["id"],),
+    )
+    get_db().commit()
+
+
+def online_users():
+    """最近 10 分钟内活跃的登录用户，按最后活跃倒序。"""
+    return get_db().execute(
+        "SELECT username, role, last_active_at FROM users "
+        f"WHERE last_active_at > datetime('now', '-{ACTIVE_WINDOW_MINUTES} minutes', 'localtime') "
+        "ORDER BY last_active_at DESC"
+    ).fetchall()
+
+
 # ---------- 封禁（小黑屋） ----------
 
 def get_active_ban(user_id):
