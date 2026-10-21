@@ -23,6 +23,17 @@
         <button type="submit" class="btn">{{ '重新开放' if q['status'] == 'closed' else '关闭问题' }}</button>
       </form>
     {% endif %}
+    {% if current_user['role'] == 'admin' %}
+      <details class="inline">
+        <summary class="linklike">删除此问答帖</summary>
+        <form method="post" action="{{ url_for('admin.delete_question', question_id=q['id']) }}" class="ban-form"
+              onsubmit="return confirm('确定删除该问答帖吗？其全部回答将一并删除，删除信息（文章名/理由/删除者）将公开公示，不可恢复！')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input name="reason" placeholder="删除理由（将公开公示）" required>
+          <button class="btn btn-bad" type="submit">确认删除</button>
+        </form>
+      </details>
+    {% endif %}
   {% endif %}
 </div>
 

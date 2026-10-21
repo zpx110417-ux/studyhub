@@ -1,5 +1,4 @@
-"""用户认证：注册 / 登录 / 登出 / 封禁提示页。"""
-import re
+"""用户认证：登录 / 登出 / 封禁提示页。（注册通道已关闭，账号由管理员导入成员名单统一创建）"""
 from datetime import datetime
 
 from flask import (
@@ -11,42 +10,12 @@ from flask import (
     session,
     url_for,
 )
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 
-from .db import get_db, USERNAME_RE
+from .db import get_db
 from .helpers import current_user, get_active_ban, login_required
 
 bp = Blueprint("auth", __name__)
-
-
-@bp.route("/auth/register", methods=("GET", "POST"))
-def register():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        confirm = request.form.get("confirm", "")
-        error = None
-        if not USERNAME_RE.fullmatch(username):
-            error = "用户名需为 3~30 位字母、数字、下划线或中文。"
-        elif len(password) < 6:
-            error = "密码至少 6 位。"
-        elif password != confirm:
-            error = "两次输入的密码不一致。"
-        elif get_db().execute(
-            "SELECT 1 FROM users WHERE username=?", (username,)
-        ).fetchone():
-            error = "该用户名已被注册。"
-        if error is None:
-            db = get_db()
-            db.execute(
-                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                (username, generate_password_hash(password, method="pbkdf2:sha256")),
-            )
-            db.commit()
-            flash("注册成功，请登录。", "success")
-            return redirect(url_for("auth.login"))
-        flash(error, "danger")
-    return render_template("auth/register.html")
 
 
 @bp.route("/auth/login", methods=("GET", "POST"))

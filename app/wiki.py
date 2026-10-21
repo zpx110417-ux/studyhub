@@ -469,6 +469,16 @@ def rules():
     return render_template("rules.html", content_html=render_md(get_setting("rules_md", "")))
 
 
+# ---------- 删除公示（公开：管理员删帖的理由与删除者在此公示） ----------
+
+@bp.route("/deletions")
+def deletions():
+    rows = get_db().execute(
+        "SELECT * FROM deletions ORDER BY id DESC LIMIT 200"
+    ).fetchall()
+    return render_template("deletions.html", rows=rows)
+
+
 # ---------- 意见箱（任何人匿名提交，不记录身份） ----------
 
 @bp.route("/suggestion", methods=("GET", "POST"))

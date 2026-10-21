@@ -4,3 +4,4 @@ gunicorn>=23,<24       # 生产 WSGI 服务器
 markdown>=3.8,<4       # Markdown 渲染
 bleach>=6.2,<7         # HTML 白名单净化（XSS 防护核心）
 pillow>=11,<12         # 上传图片真实性校验
+openpyxl>=3.1,<4       # Excel 成员名单导入

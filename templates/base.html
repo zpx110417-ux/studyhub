@@ -14,6 +14,7 @@
     <a href="{{ url_for('wiki.index') }}">页面</a>
     <a href="{{ url_for('qa.list_questions') }}">问答</a>
     <a href="{{ url_for('wiki.rules') }}">使用规则</a>
+    <a href="{{ url_for('wiki.deletions') }}">删除公示</a>
     <a href="{{ url_for('wiki.suggestion') }}">意见箱</a>
     <form class="nav-search" action="{{ url_for('wiki.search') }}" method="get">
       <input type="search" name="q" placeholder="搜索…" value="{{ request.args.get('q', '') }}">
@@ -30,7 +31,6 @@
       </form>
     {% else %}
       <a href="{{ url_for('auth.login') }}">登录</a>
-      <a class="btn btn-primary" href="{{ url_for('auth.register') }}">注册</a>
     {% endif %}
   </nav>
 </header>

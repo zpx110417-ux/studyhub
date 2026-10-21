@@ -18,11 +18,15 @@
       </td>
       <td>{{ p['updated_at'] }}</td>
       <td>
-        <form method="post" action="{{ url_for('admin.delete_page', page_id=p['id']) }}" class="inline"
-              onsubmit="return confirm('确定删除该页面吗？其所有版本历史也会一并删除，不可恢复！')">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn-bad" type="submit">删除</button>
-        </form>
+        <details>
+          <summary class="linklike">删除</summary>
+          <form method="post" action="{{ url_for('admin.delete_page', page_id=p['id']) }}" class="ban-form"
+                onsubmit="return confirm('确定删除《{{ p['title'] }}》吗？其所有版本历史也会一并删除，且删除信息将公开公示，不可恢复！')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input name="reason" placeholder="删除理由（将公开公示）" required>
+            <button class="btn btn-bad" type="submit">确认删除</button>
+          </form>
+        </details>
       </td>
     </tr>
     {% else %}

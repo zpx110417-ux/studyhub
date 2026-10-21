@@ -40,5 +40,16 @@
     <a class="btn" href="{{ url_for('wiki.report', page_id=page['id']) }}">举报</a>
   {% endif %}
   <a class="btn" href="{{ url_for('wiki.history', page_id=page['id']) }}">历史版本</a>
+  {% if current_user and current_user['role'] == 'admin' %}
+    <details class="inline">
+      <summary class="linklike">删除此页面</summary>
+      <form method="post" action="{{ url_for('admin.delete_page', page_id=page['id']) }}" class="ban-form"
+            onsubmit="return confirm('确定删除该页面吗？删除信息（文章名/理由/删除者）将公开公示，不可恢复！')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input name="reason" placeholder="删除理由（将公开公示）" required>
+        <button class="btn btn-bad" type="submit">确认删除</button>
+      </form>
+    </details>
+  {% endif %}
 </div>
 {% endblock %}

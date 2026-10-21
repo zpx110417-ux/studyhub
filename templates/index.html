@@ -3,13 +3,13 @@
 {% block content %}
 <section class="hero">
   <h1>学习库</h1>
-  <p class="muted">沉淀学习资料，互助答疑成长。任何人都可以浏览，登录后可以创建页面和参与问答。</p>
+  <p class="muted">沉淀学习资料，互助答疑成长。任何人都可以浏览，登录后可以创建页面和参与问答。账号由管理员统一导入，不开放注册。</p>
   <p>
     {% if current_user %}
       <a class="btn btn-primary" href="{{ url_for('wiki.new') }}">创建页面</a>
       <a class="btn" href="{{ url_for('qa.new_question') }}">我要提问</a>
     {% else %}
-      <a class="btn btn-primary" href="{{ url_for('auth.register') }}">注册账号</a>
+      <a class="btn btn-primary" href="{{ url_for('auth.login') }}">登录</a>
       <a class="btn" href="{{ url_for('wiki.rules') }}">查看使用规则</a>
     {% endif %}
   </p>

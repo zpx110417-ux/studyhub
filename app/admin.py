@@ -298,6 +298,64 @@ def ban_user(user_id):
     return _do_ban()
 
 
+@bp.route("/users/import", methods=("POST",))
+@admin_required
+def import_users():
+    """导入成员名单 Excel：第一列用户名，第二列密码，一一对应批量创建普通用户。"""
+    file = request.files.get("file")
+    if file is None or not file.filename:
+        flash("请选择要导入的 Excel 文件。", "danger")
+        return redirect(url_for("admin.users"))
+    if not file.filename.lower().endswith(".xlsx"):
+        flash("仅支持 .xlsx 格式的 Excel 文件（在 Excel/WPS 中另存为 .xlsx）。", "danger")
+        return redirect(url_for("admin.users"))
+
+    from openpyxl import load_workbook
+    from werkzeug.security import generate_password_hash
+    from .db import USERNAME_RE
+
+    ok, skipped = [], []
+    try:
+        wb = load_workbook(file, read_only=True, data_only=True)
+        ws = wb.active
+        for row_no, row in enumerate(ws.iter_rows(values_only=True), start=1):
+            username = str(row[0]).strip() if row and row[0] is not None else ""
+            password = str(row[1]).strip() if row and len(row) > 1 and row[1] is not None else ""
+            if not username and not password:
+                continue  # 空行直接忽略
+            if not USERNAME_RE.fullmatch(username):
+                skipped.append(f"第{row_no}行 用户名不合规（需3~30位字母/数字/下划线/中文）")
+                continue
+            if len(password) < 6:
+                skipped.append(f"第{row_no}行（{username}）密码不足 6 位")
+                continue
+            if get_db().execute(
+                "SELECT 1 FROM users WHERE username=?", (username,)
+            ).fetchone():
+                skipped.append(f"第{row_no}行 用户名已存在：{username}")
+                continue
+            get_db().execute(
+                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                (username, generate_password_hash(password, method="pbkdf2:sha256")),
+            )
+            ok.append(username)
+        get_db().commit()
+        wb.close()
+    except Exception:
+        current_app.logger.exception("成员名单导入失败")
+        flash("文件解析失败，请确认是有效的 .xlsx 文件后重试。", "danger")
+        return redirect(url_for("admin.users"))
+
+    if ok:
+        flash(f"导入成功 {len(ok)} 个账号：{'、'.join(ok)}", "success")
+    else:
+        flash("没有创建任何账号。", "warning")
+    if skipped:
+        preview = "；".join(skipped[:8]) + ("……" if len(skipped) > 8 else "")
+        flash(f"跳过 {len(skipped)} 行：{preview}", "warning")
+    return redirect(url_for("admin.users"))
+
+
 # ---------- 封禁（小黑屋）管理 ----------
 
 @bp.route("/bans")
@@ -414,14 +472,49 @@ def pages():
     return render_template("admin/pages.html", pages=rows)
 
 
+def _record_deletion(db, target_type, title, reason):
+    """删除公示：文章名、理由、删除者公开存档。"""
+    db.execute(
+        "INSERT INTO deletions (target_type, title, reason, admin_id, admin_name) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (target_type, title, reason, current_user()["id"], current_user()["username"]),
+    )
+
+
 @bp.route("/pages/<int:page_id>/delete", methods=("POST",))
 @admin_required
 def delete_page(page_id):
+    reason = request.form.get("reason", "").strip()
+    if not reason:
+        flash("删除必须给出理由，理由将公开发布到删除公示。", "danger")
+        return redirect(url_for("admin.pages"))
     db = get_db()
+    row = db.execute("SELECT title FROM pages WHERE id=?", (page_id,)).fetchone()
+    if row is None:
+        abort(404)
+    _record_deletion(db, "page", row["title"], reason)
     db.execute("DELETE FROM pages WHERE id=?", (page_id,))  # 版本/申请记录级联删除
     db.commit()
-    flash("页面已删除。", "success")
+    flash(f"页面《{row['title']}》已删除，删除信息已公示。", "success")
     return redirect(url_for("admin.pages"))
+
+
+@bp.route("/questions/<int:question_id>/delete", methods=("POST",))
+@admin_required
+def delete_question(question_id):
+    reason = request.form.get("reason", "").strip()
+    if not reason:
+        flash("删除必须给出理由，理由将公开发布到删除公示。", "danger")
+        return redirect(url_for("qa.list_questions"))
+    db = get_db()
+    row = db.execute("SELECT title FROM questions WHERE id=?", (question_id,)).fetchone()
+    if row is None:
+        abort(404)
+    _record_deletion(db, "question", row["title"], reason)
+    db.execute("DELETE FROM questions WHERE id=?", (question_id,))  # 回答级联删除
+    db.commit()
+    flash(f"问答帖《{row['title']}》已删除，删除信息已公示。", "success")
+    return redirect(url_for("qa.list_questions"))
 
 
 # ---------- 意见箱（匿名，全部管理员共见） ----------

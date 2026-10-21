@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}删除公示{% endblock %}
+{% block content %}
+<h1>删除公示</h1>
+<p class="muted">管理员删除页面或问答帖时必须说明理由；被删文章名、删除理由与删除者在此向全体成员公开，接受监督。</p>
+
+<div class="card">
+  <table>
+    <tr><th>文章名</th><th>类型</th><th>删除理由</th><th>删除者</th><th>删除时间</th></tr>
+    {% for d in rows %}
+    <tr>
+      <td>{{ d['title'] }}</td>
+      <td>{{ '学习页面' if d['target_type'] == 'page' else '问答帖' }}</td>
+      <td>{{ d['reason'] }}</td>
+      <td>{{ d['admin_name'] }}</td>
+      <td>{{ d['created_at'] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">暂无删除记录。</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

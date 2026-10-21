@@ -2,6 +2,7 @@
 -- 约定：时间统一存 SQLite datetime('now','localtime') 输出的 TEXT 格式 YYYY-MM-DD HH:MM:SS
 --       日期（如 last_reject_date / last_scan_date）存 date('now','localtime') 的 YYYY-MM-DD
 
+DROP TABLE IF EXISTS deletions;
 DROP TABLE IF EXISTS appeals;
 DROP TABLE IF EXISTS bans;
 DROP TABLE IF EXISTS suggestions;
@@ -143,6 +144,18 @@ CREATE TABLE appeals (
     created_at   TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 CREATE INDEX idx_appeals_ban ON appeals(ban_id);
+
+-- 删除公示：管理员删帖必须给出理由，文章名/理由/删除者公开展示（原帖物理删除，此处存快照）
+CREATE TABLE deletions (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    target_type TEXT NOT NULL,                  -- page | question
+    title       TEXT NOT NULL,                  -- 被删文章名快照
+    reason      TEXT NOT NULL,
+    admin_id    INTEGER NOT NULL REFERENCES users(id),
+    admin_name  TEXT NOT NULL,                  -- 删除者用户名快照
+    created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX idx_deletions_time ON deletions(created_at DESC);
 
 -- 站点设置（使用规则、敏感词词库等）
 CREATE TABLE site_settings (
