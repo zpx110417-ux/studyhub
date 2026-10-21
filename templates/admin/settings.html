@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}站点设置{% endblock %}
+{% block content %}
+<h1>站点设置</h1>
+
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="card">
+    <h2>使用规则</h2>
+    <p class="muted">支持 Markdown，展示在 /rules 页面，全站公开可见。</p>
+    <textarea name="rules_md" rows="14" class="wide">{{ data['rules_md'] }}</textarea>
+  </div>
+
+  <div class="card">
+    <h2>高危敏感词（实时拦截）</h2>
+    <p class="muted">逗号或换行分隔。发帖 / 编辑保存时命中直接拒绝发布。</p>
+    <textarea name="words_high" rows="4" class="wide" placeholder="例如：词1, 词2, 词3">{{ data['words_high'] }}</textarea>
+  </div>
+
+  <div class="card">
+    <h2>中危敏感词（标记举报 + 每日扫描隐藏）</h2>
+    <p class="muted">
+      逗号或换行分隔。发布不拦截但自动生成系统举报；每日全站扫描命中时自动隐藏内容，等管理员复核。
+    </p>
+    <textarea name="words_low" rows="4" class="wide" placeholder="例如：词A, 词B">{{ data['words_low'] }}</textarea>
+  </div>
+
+  <p><button class="btn btn-primary" type="submit">保存设置</button></p>
+</form>
+
+<p class="muted">最近一次全站扫描日期：{{ last_scan or '尚未执行（cron 每小时运行 flask auto-moderate，每天自动扫描一次）' }}</p>
+{% endblock %}

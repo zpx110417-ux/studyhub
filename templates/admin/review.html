@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}待审批页面{% endblock %}
+{% block content %}
+<h1>待审批页面</h1>
+
+{% if pages %}
+  {% for p in pages %}
+  <div class="card">
+    <h3><a href="{{ url_for('wiki.view', page_id=p['id']) }}">{{ p['title'] }}</a></h3>
+    <p class="muted">
+      作者：{{ p['author'] }} · 提交于 {{ p['updated_at'] }} ·
+      已被驳回 {{ p['reject_count'] }} 次 ·
+      分配审核人：{{ p['reviewer'] or '系统' }}
+    </p>
+    <form method="post" action="{{ url_for('admin.reject_page', page_id=p['id']) }}" class="review-row">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-ok" type="submit" formaction="{{ url_for('admin.approve_page', page_id=p['id']) }}">批准发布</button>
+      <input name="note" placeholder="驳回理由（驳回时必填）">
+      <button class="btn btn-bad" type="submit">驳回</button>
+    </form>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="muted">没有待审批的页面。</p>
+{% endif %}
+{% endblock %}

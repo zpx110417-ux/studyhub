@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}页面管理{% endblock %}
+{% block content %}
+<h1>页面管理</h1>
+
+<div class="card">
+  <table>
+    <tr><th>标题</th><th>作者</th><th>状态</th><th>更新时间</th><th>操作</th></tr>
+    {% for p in pages %}
+    <tr>
+      <td><a href="{{ url_for('wiki.view', page_id=p['id']) }}">{{ p['title'] }}</a></td>
+      <td>{{ p['author'] }}</td>
+      <td>
+        {% if p['status'] == 'published' %}<span class="tag tag-ok">已发布</span>
+        {% elif p['status'] == 'pending' %}<span class="tag tag-warn">待审批</span>
+        {% elif p['status'] == 'rejected' %}<span class="tag tag-bad">已驳回</span>
+        {% else %}<span class="tag tag-bad">已隐藏</span>{% endif %}
+      </td>
+      <td>{{ p['updated_at'] }}</td>
+      <td>
+        <form method="post" action="{{ url_for('admin.delete_page', page_id=p['id']) }}" class="inline"
+              onsubmit="return confirm('确定删除该页面吗？其所有版本历史也会一并删除，不可恢复！')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-bad" type="submit">删除</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">暂无页面。</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ page['title'] }}{% endblock %}
+{% block content %}
+
+{% if page['status'] == 'pending' %}
+<div class="banner banner-warning">
+  该页面正在等待审批，审批通过前仅您和管理员可见。
+  {% if page['reviewed_by'] %}（当前审核人：{{ reviewer_name }}）{% endif %}
+</div>
+{% elif page['status'] == 'rejected' %}
+<div class="banner banner-danger">
+  该页面已被驳回（第 {{ page['reject_count'] }} 次）：{{ page['review_note'] }}。
+  {% if editable %}修改后重新保存即可再次提交。{% endif %}
+  {% if page['reject_count'] >= 3 %}连续驳回 3 次的页面当天不可再次提交。{% endif %}
+</div>
+{% elif page['status'] == 'hidden' %}
+<div class="banner banner-danger">该页面已被系统自动隐藏（命中敏感词），等待管理员复核。</div>
+{% endif %}
+
+<article class="card md-body">
+  <h1>{{ page['title'] }}</h1>
+  <p class="muted">
+    {{ author }} 创建于 {{ page['created_at'] }}，更新于 {{ page['updated_at'] }}
+  </p>
+  {{ page['content_html'] | safe }}
+</article>
+
+<div class="toolbar-row">
+  {% if editable %}
+    <a class="btn btn-primary" href="{{ url_for('wiki.edit', page_id=page['id']) }}">编辑</a>
+  {% elif current_user %}
+    {% if pending_req %}
+      <span class="tag tag-warn">编辑权申请审批中</span>
+    {% elif grant %}
+      <span class="tag tag-bad">编辑授权已过期（{{ grant['expires_at'] }}）</span>
+      <a class="btn" href="{{ url_for('wiki.apply_edit', page_id=page['id']) }}">重新申请</a>
+    {% elif page['status'] == 'published' %}
+      <a class="btn" href="{{ url_for('wiki.apply_edit', page_id=page['id']) }}">申请编辑权限</a>
+    {% endif %}
+    <a class="btn" href="{{ url_for('wiki.report', page_id=page['id']) }}">举报</a>
+  {% endif %}
+  <a class="btn" href="{{ url_for('wiki.history', page_id=page['id']) }}">历史版本</a>
+</div>
+{% endblock %}

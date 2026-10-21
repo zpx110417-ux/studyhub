@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ q['title'] }}{% endblock %}
+{% block content %}
+
+{% if q['status'] == 'hidden' %}
+<div class="banner banner-danger">该问题已被系统自动隐藏（命中敏感词），等待管理员复核。</div>
+{% endif %}
+
+<article class="card md-body">
+  <h1>{{ q['title'] }}
+    {% if q['status'] == 'closed' %}<span class="tag tag-muted">已关闭</span>{% endif %}
+  </h1>
+  <p class="muted">{{ q['author'] }} 提问于 {{ q['created_at'] }}</p>
+  {{ q['content_html'] | safe }}
+</article>
+
+<div class="toolbar-row">
+  {% if current_user %}
+    <a class="btn" href="{{ url_for('wiki.report', question_id=q['id']) }}">举报</a>
+    {% if is_owner and q['status'] != 'hidden' %}
+      <form method="post" action="{{ url_for('qa.close', question_id=q['id']) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn">{{ '重新开放' if q['status'] == 'closed' else '关闭问题' }}</button>
+      </form>
+    {% endif %}
+  {% endif %}
+</div>
+
+<h2>{{ answers | length }} 个回答</h2>
+{% for a in answers %}
+  <article class="card md-body {% if a['status'] == 'hidden' %}item-hidden{% endif %}">
+    <p class="muted">
+      {{ a['author'] }} 回答于 {{ a['created_at'] }}
+      {% if a['status'] == 'hidden' %}<span class="tag tag-bad">已被系统隐藏</span>{% endif %}
+    </p>
+    {{ a['content_html'] | safe }}
+    {% if current_user and a['status'] == 'visible' %}
+      <p><a href="{{ url_for('wiki.report', answer_id=a['id']) }}" class="muted">举报此回答</a></p>
+    {% endif %}
+  </article>
+{% else %}
+  <p class="muted">还没有回答，来回答第一个吧。</p>
+{% endfor %}
+
+{% if current_user and q['status'] == 'open' and q['status'] != 'hidden' %}
+<div class="card">
+  <h3>写回答</h3>
+  <form method="post" action="{{ url_for('qa.answer', question_id=q['id']) }}" class="editor-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="editor-grid">
+      <label>回答内容（Markdown）
+        <textarea id="content" name="content" rows="6" required></textarea>
+      </label>
+      <div class="preview-wrap">
+        <span class="muted">实时预览</span>
+        <div id="preview" class="md-body"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" type="submit">发布回答</button>
+  </form>
+</div>
+{% elif not current_user %}
+<p class="muted"><a href="{{ url_for('auth.login') }}">登录</a>后可以回答这个问题。</p>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if current_user and q['status'] == 'open' and q['status'] != 'hidden' %}
+<script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endif %}
+{% endblock %}

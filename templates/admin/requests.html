@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}编辑授权申请{% endblock %}
+{% block content %}
+<h1>编辑授权申请</h1>
+
+<div class="card">
+  <table>
+    <tr><th>申请人</th><th>页面</th><th>理由</th><th>状态</th><th>审批人</th><th>有效期至</th><th>操作</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r['requester'] }}</td>
+      <td><a href="{{ url_for('wiki.view', page_id=r['page_id']) }}">{{ r['page_title'] }}</a></td>
+      <td class="pre-wrap">{{ r['reason'] }}</td>
+      <td>
+        {% if r['status'] == 'pending' %}<span class="tag tag-warn">待审批</span>
+        {% elif r['status'] == 'approved' %}<span class="tag tag-ok">已授权</span>
+        {% elif r['status'] == 'rejected' %}<span class="tag tag-bad">已驳回</span>
+        {% else %}<span class="tag tag-muted">已撤销</span>{% endif %}
+      </td>
+      <td>{{ r['reviewer'] or '—' }}</td>
+      <td>{{ r['expires_at'] or '—' }}</td>
+      <td>
+        {% if r['status'] == 'pending' %}
+          <form method="post" action="{{ url_for('admin.handle_request', req_id=r['id'], action='approve') }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-ok" type="submit">批准</button>
+          </form>
+          <form method="post" action="{{ url_for('admin.handle_request', req_id=r['id'], action='reject') }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-bad" type="submit">驳回</button>
+          </form>
+        {% elif r['status'] == 'approved' %}
+          <form method="post" action="{{ url_for('admin.handle_request', req_id=r['id'], action='revoke') }}" class="inline"
+                onsubmit="return confirm('确定撤销该授权吗？')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn" type="submit">撤销授权</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">暂无申请。</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

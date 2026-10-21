@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>学习库</h1>
+  <p class="muted">沉淀学习资料，互助答疑成长。任何人都可以浏览，登录后可以创建页面和参与问答。</p>
+  <p>
+    {% if current_user %}
+      <a class="btn btn-primary" href="{{ url_for('wiki.new') }}">创建页面</a>
+      <a class="btn" href="{{ url_for('qa.new_question') }}">我要提问</a>
+    {% else %}
+      <a class="btn btn-primary" href="{{ url_for('auth.register') }}">注册账号</a>
+      <a class="btn" href="{{ url_for('wiki.rules') }}">查看使用规则</a>
+    {% endif %}
+  </p>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>最近更新的页面</h2>
+    {% if pages %}
+      <ul class="list">
+        {% for p in pages %}
+        <li>
+          <a href="{{ url_for('wiki.view', page_id=p['id']) }}">{{ p['title'] }}</a>
+          <span class="muted">{{ p['author'] }} · {{ p['updated_at'] }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">还没有已发布的页面，快来创建第一篇吧。</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>最新问答</h2>
+    {% if questions %}
+      <ul class="list">
+        {% for q in questions %}
+        <li>
+          <a href="{{ url_for('qa.detail', question_id=q['id']) }}">{{ q['title'] }}</a>
+          <span class="muted">{{ q['n_answers'] }} 回答 · {{ q['author'] }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">还没有提问，去问问吧。</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}意见箱{% endblock %}
+{% block content %}
+<h1>意见箱 <span class="muted small">（匿名提交，全体管理员共见）</span></h1>
+
+{% for s in rows %}
+<div class="card {% if s['handled'] %}item-muted{% endif %}">
+  <p class="pre-wrap">{{ s['content'] }}</p>
+  <p class="muted small">
+    第 {{ s['id'] }} 条 · {{ s['created_at'] }} ·
+    {% if s['handled'] %}已处理{% else %}<span class="tag tag-warn">未处理</span>{% endif %}
+  </p>
+  <div class="review-row">
+    {% if not s['handled'] %}
+    <form method="post" action="{{ url_for('admin.handle_suggestion', sid=s['id']) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-ok" type="submit">标记已处理</button>
+    </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('admin.delete_suggestion', sid=s['id']) }}" class="inline"
+          onsubmit="return confirm('确定删除这条意见吗？')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-bad" type="submit">删除</button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="muted">暂无意见。</p>
+{% endfor %}
+{% endblock %}

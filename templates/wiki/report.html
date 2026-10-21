@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}举报{% endblock %}
+{% block content %}
+<h1>举报违规内容</h1>
+
+<div class="card">
+  <p>
+    举报目标：
+    {% if kind == 'page' %}
+      页面 <a href="{{ url_for('wiki.view', page_id=row['id']) }}">{{ row['title'] }}</a>
+    {% elif kind == 'question' %}
+      问题 <a href="{{ url_for('qa.detail', question_id=row['id']) }}">{{ row['title'] }}</a>
+    {% else %}
+      <a href="{{ url_for('qa.detail', question_id=row['qid']) }}">一条回答</a>
+    {% endif %}
+  </p>
+  <p class="muted">请描述该内容违反了使用规则的哪一条，管理员会尽快处理。恶意举报也会被处罚。</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>举报理由
+      <textarea name="reason" rows="4" required></textarea>
+    </label>
+    <button class="btn btn-primary" type="submit">提交举报</button>
+    <a class="btn" href="javascript:history.back()">取消</a>
+  </form>
+</div>
+{% endblock %}

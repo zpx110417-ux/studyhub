@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}学习库{% endblock %} · StudyHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <nav class="container nav">
+    <a class="brand" href="{{ url_for('wiki.index') }}">学习库</a>
+    <a href="{{ url_for('wiki.index') }}">页面</a>
+    <a href="{{ url_for('qa.list_questions') }}">问答</a>
+    <a href="{{ url_for('wiki.rules') }}">使用规则</a>
+    <a href="{{ url_for('wiki.suggestion') }}">意见箱</a>
+    <form class="nav-search" action="{{ url_for('wiki.search') }}" method="get">
+      <input type="search" name="q" placeholder="搜索…" value="{{ request.args.get('q', '') }}">
+    </form>
+    <div class="spacer"></div>
+    {% if current_user %}
+      {% if current_user['role'] == 'admin' %}
+        <a href="{{ url_for('admin.index') }}">管理后台</a>
+      {% endif %}
+      <span class="muted">{{ current_user['username'] }}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="linklike">退出</button>
+      </form>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}">登录</a>
+      <a class="btn btn-primary" href="{{ url_for('auth.register') }}">注册</a>
+    {% endif %}
+  </nav>
+</header>
+
+{% if active_ban %}
+<div class="container">
+  <div class="banner banner-danger">
+    您的账号已被封禁至 {{ active_ban['banned_until'] }}，理由：{{ active_ban['reason'] }}。
+    <a href="{{ url_for('wiki.appeal') }}">提交申诉</a>
+  </div>
+</div>
+{% endif %}
+
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="banner banner-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="container footer muted">
+  StudyHub · 学校学习库 · <a href="{{ url_for('wiki.rules') }}">使用规则</a>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}申诉{% endblock %}
+{% block content %}
+<h1>封禁申诉</h1>
+
+{% if ban %}
+<div class="card">
+  <h2>您当前生效中的封禁</h2>
+  <p><strong>封禁理由：</strong>{{ ban['reason'] }}</p>
+  <p><strong>解封时间：</strong>{{ ban['banned_until'] }}</p>
+  <p><strong>已申诉：</strong>{{ used }} / {{ max_appeals }} 次</p>
+
+  {% if used >= max_appeals %}
+    <div class="banner banner-warning">本条封禁的申诉次数已用完。</div>
+  {% elif pending %}
+    <div class="banner banner-info">您已有一条待处理的申诉，请耐心等待管理员审批（48 小时内未处理将由系统自动审批）。</div>
+  {% else %}
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>申诉内容（说明您认为封禁不当的理由）
+        <textarea name="content" rows="5" required></textarea>
+      </label>
+      <button class="btn btn-primary" type="submit">提交申诉</button>
+    </form>
+  {% endif %}
+</div>
+{% else %}
+<div class="banner banner-info">您当前没有生效中的封禁。</div>
+{% endif %}
+
+{% if appeals %}
+<div class="card">
+  <h2>申诉历史</h2>
+  <table>
+    <tr><th>时间</th><th>对应封禁</th><th>申诉内容</th><th>状态</th><th>审批人</th></tr>
+    {% for a in appeals %}
+    <tr>
+      <td>{{ a['created_at'] }}</td>
+      <td>{{ a['ban_created'] }}<br><span class="muted">至 {{ a['banned_until'] }}</span></td>
+      <td class="pre-wrap">{{ a['content'] }}</td>
+      <td>
+        {% if a['status'] == 'pending' %}<span class="tag tag-warn">待处理</span>
+        {% elif a['status'] == 'approved' %}<span class="tag tag-ok">申诉成功（已解封）</span>
+        {% else %}<span class="tag tag-bad">已驳回</span>{% endif %}
+      </td>
+      <td>{{ a['reviewer'] if a['reviewer'] else '系统自动审批' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

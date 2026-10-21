@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}历史版本 · {{ page['title'] }}{% endblock %}
+{% block content %}
+<h1>历史版本：{{ page['title'] }}</h1>
+<p><a href="{{ url_for('wiki.view', page_id=page['id']) }}">← 返回页面</a></p>
+
+<div class="card">
+  <table>
+    <tr><th>版本</th><th>编辑人</th><th>时间</th><th>说明</th><th>操作</th></tr>
+    {% for v in versions %}
+    <tr>
+      <td>#{{ v['id'] }}{% if loop.first %} <span class="tag tag-ok">当前</span>{% endif %}</td>
+      <td>{{ v['editor'] }}</td>
+      <td>{{ v['edited_at'] }}</td>
+      <td>{{ v['comment'] }}</td>
+      <td>
+        {% if not loop.last %}
+          <a href="{{ url_for('wiki.diff', page_id=page['id'], from=versions[loop.index]['id'], to=v['id']) }}">与上一版对比</a>
+        {% endif %}
+        {% if editable and not loop.first %}
+          <form method="post" action="{{ url_for('wiki.rollback', page_id=page['id']) }}" class="inline"
+                onsubmit="return confirm('确定回滚到此版本吗？当前内容会先自动备份。')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="version_id" value="{{ v['id'] }}">
+            <button type="submit" class="linklike">回滚到此版</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

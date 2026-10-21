@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}举报处理{% endblock %}
+{% block content %}
+<h1>举报处理</h1>
+
+{% for r in rows %}
+<div class="card {% if r['status'] != 'pending' %}item-muted{% endif %}">
+  <p>
+    {% if r['status'] == 'pending' %}<span class="tag tag-warn">待处理</span>
+    {% elif r['status'] == 'dismissed' %}<span class="tag tag-muted">已驳回</span>
+    {% else %}<span class="tag tag-ok">已处置</span>{% endif %}
+    {% if r['reporter'] %}
+      举报人：{{ r['reporter'] }}
+    {% else %}
+      <span class="tag tag-bad">系统识别</span>
+    {% endif %}
+    · 被举报人：{{ r['target'] }} · 时间：{{ r['created_at'] }}
+  </p>
+  <p>
+    {% if r['pid'] %}
+      涉及页面：<a href="{{ url_for('wiki.view', page_id=r['pid']) }}">{{ r['page_title'] }}</a>
+    {% elif r['aqid'] %}
+      涉及回答：<a href="{{ url_for('qa.detail', question_id=r['aqid']) }}">查看</a>
+    {% elif r['qid'] %}
+      涉及问题：<a href="{{ url_for('qa.detail', question_id=r['qid']) }}">{{ r['question_title'] }}</a>
+    {% else %}（内容已删除）{% endif %}
+  </p>
+  <p><strong>理由：</strong>{{ r['reason'] }}</p>
+
+  {% if r['status'] == 'pending' %}
+  <div class="review-row">
+    <form method="post" action="{{ url_for('admin.dismiss_report', report_id=r['id']) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn" type="submit">驳回举报</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.ban_from_report', report_id=r['id']) }}" class="inline ban-form"
+          onsubmit="return confirm('确定封禁该用户吗？')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="user_id" value="{{ r['target_user_id'] }}">
+      <select name="days">
+        {% for d in ban_days %}<option value="{{ d }}">封禁 {{ d }} 天</option>{% endfor %}
+      </select>
+      <input name="reason" placeholder="封禁理由" required>
+      <button class="btn btn-bad" type="submit">封禁（小黑屋）</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="muted">处理人：{{ r['handled_by'] and '管理员' }} · {{ r['handled_at'] }}</p>
+  {% endif %}
+</div>
+{% else %}
+<p class="muted">暂无举报。</p>
+{% endfor %}
+{% endblock %}

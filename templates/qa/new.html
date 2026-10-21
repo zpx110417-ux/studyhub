@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}提问{% endblock %}
+{% block content %}
+<h1>我要提问</h1>
+<form method="post" class="editor-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>问题标题<input name="title" value="{{ title }}" required></label>
+
+  <div class="editor-toolbar">
+    <button type="button" data-md="bold"><b>B</b></button>
+    <button type="button" data-md="italic"><i>I</i></button>
+    <button type="button" data-md="code">&lt;/&gt;</button>
+    <button type="button" data-md="ul">• 列表</button>
+  </div>
+
+  <div class="editor-grid">
+    <label>问题详情（Markdown）
+      <textarea id="content" name="content" rows="12" required>{{ content }}</textarea>
+    </label>
+    <div class="preview-wrap">
+      <span class="muted">实时预览</span>
+      <div id="preview" class="md-body"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" type="submit">发布提问</button>
+  <a class="btn" href="{{ url_for('qa.list_questions') }}">取消</a>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endblock %}

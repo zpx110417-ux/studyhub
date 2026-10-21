@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}账号已被封禁{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 640px; margin: 3rem auto; text-align: center;">
+  <h1>账号已被封禁</h1>
+  <p style="font-size: 1.1rem;">
+    您因不当言论已被封禁，封禁时间剩余 <strong>{{ remaining }}</strong>。
+  </p>
+  <div class="banner banner-danger" style="text-align: left;">
+    <strong>封禁理由：</strong>{{ ban['reason'] }}
+  </div>
+  {% if ban['evidence'] %}
+  <div style="text-align: left;">
+    <p class="muted">被认定的不当言论：</p>
+    <pre class="pre-wrap">{{ ban['evidence'] }}</pre>
+  </div>
+  {% endif %}
+  <p class="muted">封禁至：{{ ban['banned_until'] }} · 执行管理员：{{ banner_name }}</p>
+  <p>
+    如有异议，可向管理员申诉。
+    <a class="btn btn-primary" href="{{ url_for('wiki.appeal') }}">我要申诉</a>
+  </p>
+  <p class="muted small">每条封禁最多可申诉 {{ max_appeals }} 次。</p>
+</div>
+{% endblock %}

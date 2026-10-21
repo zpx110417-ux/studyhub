@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}管理后台{% endblock %}
+{% block content %}
+<h1>管理后台</h1>
+
+<div class="stat-grid">
+  <a class="stat card" href="{{ url_for('admin.review') }}">
+    <span class="stat-num">{{ stats['pending_pages'] }}</span>待审批页面
+  </a>
+  <a class="stat card" href="{{ url_for('admin.requests') }}">
+    <span class="stat-num">{{ stats['pending_requests'] }}</span>待审编辑申请
+  </a>
+  <a class="stat card" href="{{ url_for('admin.reports') }}">
+    <span class="stat-num">{{ stats['pending_reports'] }}</span>待处理举报
+  </a>
+  <a class="stat card" href="{{ url_for('admin.appeals') }}">
+    <span class="stat-num">{{ stats['pending_appeals'] }}</span>待审申诉
+  </a>
+  <a class="stat card" href="{{ url_for('admin.bans') }}">
+    <span class="stat-num">{{ stats['active_bans'] }}</span>封禁中
+  </a>
+  <a class="stat card" href="{{ url_for('admin.suggestions') }}">
+    <span class="stat-num">{{ stats['pending_suggestions'] }}</span>未读意见
+  </a>
+</div>
+
+<div class="card">
+  <h2>快捷入口</h2>
+  <p>
+    <a href="{{ url_for('admin.users') }}">用户管理</a> ·
+    <a href="{{ url_for('admin.pages') }}">页面管理</a> ·
+    <a href="{{ url_for('admin.suggestions') }}">意见箱</a> ·
+    <a href="{{ url_for('admin.settings') }}">站点设置（使用规则 / 敏感词词库）</a>
+  </p>
+  <p class="muted">系统代管：cron 每小时执行 <code>flask auto-moderate</code>，自动处理审批超时、申诉超时与每日全站扫描。</p>
+</div>
+{% endblock %}

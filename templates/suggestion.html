@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}意见箱{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 640px; margin: 2rem auto;">
+  <h1>意见箱</h1>
+  <p class="muted">
+    对学习库有任何建议或意见，都可以在这里匿名告诉我们。
+    无需登录，不记录任何身份信息，全体管理员都会看到并认真处理。
+  </p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <textarea name="content" rows="6" required maxlength="1000"
+              placeholder="请写下您的意见或建议（1000 字以内）…"></textarea>
+    <button class="btn btn-primary" type="submit">匿名提交</button>
+  </form>
+</div>
+{% endblock %}

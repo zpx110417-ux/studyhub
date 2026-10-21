@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}申诉审批{% endblock %}
+{% block content %}
+<h1>申诉审批</h1>
+<p class="muted">规则：每条封禁最多 5 次申诉审批（执行封禁的管理员也在其中），每位管理员对同一条封禁只能审批一次；48 小时未处理由系统自动驳回（维持封禁）。</p>
+
+{% for item in items %}
+{% set r = item['row'] %}
+<div class="card {% if r['status'] != 'pending' %}item-muted{% endif %}">
+  <p>
+    {% if r['status'] == 'pending' %}<span class="tag tag-warn">待审批</span>
+    {% elif r['status'] == 'approved' %}<span class="tag tag-ok">申诉成功（已解封）</span>
+    {% else %}<span class="tag tag-bad">已驳回（维持封禁）</span>{% endif %}
+    申诉人：{{ r['appellant'] }} · 申诉时间：{{ r['created_at'] }}
+  </p>
+  <p class="muted">
+    对应封禁：封禁至 {{ r['banned_until'] }} · 理由：{{ r['ban_reason'] }} ·
+    执行管理员：{{ r['banner'] }}
+  </p>
+  {% if r['evidence'] %}
+  <div>
+    <p class="muted">导致封禁的不当言论：</p>
+    <pre class="pre-wrap">{{ r['evidence'] }}</pre>
+  </div>
+  {% endif %}
+  <p><strong>申诉内容：</strong><span class="pre-wrap">{{ r['content'] }}</span></p>
+
+  {% if r['status'] == 'pending' %}
+    {% if item['can_review'] %}
+    <div class="review-row">
+      <form method="post" action="{{ url_for('admin.handle_appeal', appeal_id=r['id'], action='approve') }}" class="inline"
+            onsubmit="return confirm('确定采纳申诉并解封吗？')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ok" type="submit">采纳申诉（解封）</button>
+      </form>
+      <form method="post" action="{{ url_for('admin.handle_appeal', appeal_id=r['id'], action='reject') }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-bad" type="submit">驳回申诉（维持封禁）</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="banner banner-info">
+      您已审批过这条封禁的其他申诉，每位管理员只能审批一次，请等待其他管理员处理。
+    </div>
+    {% endif %}
+  {% else %}
+  <p class="muted">审批人：{{ r['reviewer'] or '系统自动审批' }} · {{ r['reviewed_at'] }}</p>
+  {% endif %}
+</div>
+{% else %}
+<p class="muted">暂无申诉。</p>
+{% endfor %}
+{% endblock %}

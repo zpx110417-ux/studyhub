@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑页面' if action == 'edit' else '创建页面' }}{% endblock %}
+{% block content %}
+<h1>{{ '编辑：' + page['title'] if action == 'edit' else '创建新页面' }}</h1>
+
+{% if reject_locked %}
+<div class="banner banner-danger">该页面今天已被驳回 3 次，当天不能再提交，请明天再修改。</div>
+{% endif %}
+{% if action == 'new' %}
+<div class="banner banner-info">页面提交后将分配给一位管理员审批，通过后才会公开显示。</div>
+{% endif %}
+
+<form method="post" class="editor-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>标题<input name="title" value="{{ title }}" required></label>
+
+  <div class="editor-toolbar">
+    <button type="button" data-md="bold"><b>B</b></button>
+    <button type="button" data-md="italic"><i>I</i></button>
+    <button type="button" data-md="h2">H2</button>
+    <button type="button" data-md="quote">&gt; 引用</button>
+    <button type="button" data-md="ul">• 列表</button>
+    <button type="button" data-md="ol">1. 列表</button>
+    <button type="button" data-md="code">&lt;/&gt;</button>
+    <button type="button" data-md="link">链接</button>
+    <label class="upload-btn">插图<input id="upload-image" type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden></label>
+    <label class="upload-btn">附件<input id="upload-file" type="file" hidden></label>
+  </div>
+
+  <div class="editor-grid">
+    <label>内容（Markdown）
+      <textarea id="content" name="content" rows="18" required>{{ content }}</textarea>
+    </label>
+    <div class="preview-wrap">
+      <span class="muted">实时预览</span>
+      <div id="preview" class="md-body"></div>
+    </div>
+  </div>
+
+  {% if action == 'edit' %}
+  <label>编辑说明（可选）<input name="comment" placeholder="例如：修正错别字"></label>
+  {% endif %}
+
+  <button class="btn btn-primary" type="submit" {% if reject_locked %}disabled{% endif %}>
+    {{ '保存修改' if action == 'edit' else '提交审批' }}
+  </button>
+  <a class="btn" href="{{ url_for('wiki.index') if action == 'new' else url_for('wiki.view', page_id=page['id']) }}">取消</a>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endblock %}

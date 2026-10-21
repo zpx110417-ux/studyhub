@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}搜索{% endblock %}
+{% block content %}
+<h1>搜索：{{ q or '（请输入关键词）' }}</h1>
+
+{% if q %}
+  <section class="card">
+    <h2>页面（{{ pages | length }} 条结果）</h2>
+    {% if pages %}
+      <ul class="list">
+        {% for p in pages %}
+        <li><a href="{{ url_for('wiki.view', page_id=p['id']) }}">{{ p['title'] }}</a>
+          <span class="muted">更新于 {{ p['updated_at'] }}</span></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">没有匹配的页面。</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>问答（{{ questions | length }} 条结果）</h2>
+    {% if questions %}
+      <ul class="list">
+        {% for question in questions %}
+        <li><a href="{{ url_for('qa.detail', question_id=question['id']) }}">{{ question['title'] }}</a>
+          <span class="muted">提问于 {{ question['created_at'] }}</span></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">没有匹配的问答。</p>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}

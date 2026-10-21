@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}申请编辑权限{% endblock %}
+{% block content %}
+<h1>申请编辑权限</h1>
+
+<div class="card">
+  <p>目标页面：<a href="{{ url_for('wiki.view', page_id=page['id']) }}">{{ page['title'] }}</a></p>
+  <p class="muted">
+    说明：编辑他人创建的页面需要管理员授权。授权仅对本页面生效，批准后
+    <strong>24 小时内有效</strong>，过期后需要重新申请。
+  </p>
+
+  {% if pending %}
+    <div class="banner banner-info">
+      您的申请正在审批中（提交于 {{ pending['created_at'] }}），请耐心等待。
+    </div>
+  {% else %}
+    {% if last %}
+      {% if last['status'] == 'approved' %}
+        <div class="banner banner-warning">您上一次的授权已于 {{ last['expires_at'] }} 过期，可重新申请。</div>
+      {% elif last['status'] == 'rejected' %}
+        <div class="banner banner-warning">您上一次的申请被驳回，可重新提交申请。</div>
+      {% elif last['status'] == 'revoked' %}
+        <div class="banner banner-warning">您上一次的授权已被管理员撤销，可重新申请。</div>
+      {% endif %}
+    {% endif %}
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>申请理由（说明您想做什么修改）
+        <textarea name="reason" rows="4" required></textarea>
+      </label>
+      <button class="btn btn-primary" type="submit">提交申请</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}封禁管理{% endblock %}
+{% block content %}
+<h1>封禁管理（小黑屋）</h1>
+
+<div class="card">
+  <table>
+    <tr><th>用户</th><th>理由</th><th>执行管理员</th><th>开始</th><th>解封时间</th><th>状态</th><th>操作</th></tr>
+    {% for b in rows %}
+    <tr>
+      <td>{{ b['banned_user'] }}</td>
+      <td class="pre-wrap">{{ b['reason'] }}</td>
+      <td>{{ b['admin_name'] }}</td>
+      <td>{{ b['created_at'] }}</td>
+      <td>{{ b['banned_until'] }}</td>
+      <td>
+        {% if b['lifted_at'] %}<span class="tag tag-muted">已解封（{{ b['lifted_at'] }}）</span>
+        {% elif b['banned_until'] <= now_str %}<span class="tag tag-muted">已到期</span>
+        {% else %}<span class="tag tag-bad">封禁中</span>{% endif %}
+      </td>
+      <td>
+        {% if not b['lifted_at'] and b['banned_until'] > now_str %}
+        <form method="post" action="{{ url_for('admin.lift_ban', ban_id=b['id']) }}" class="inline"
+              onsubmit="return confirm('确定提前解封吗？')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn" type="submit">提前解封</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">暂无封禁记录。</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

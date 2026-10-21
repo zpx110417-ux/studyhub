@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}问答{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>问答</h1>
+  {% if current_user %}<a class="btn btn-primary" href="{{ url_for('qa.new_question') }}">我要提问</a>{% endif %}
+</div>
+<p class="muted">提问和回答免审批直接发布，但会受敏感词检测与举报机制监管。</p>
+
+{% if questions %}
+  <div class="card">
+    <table>
+      <tr><th>问题</th><th>提问人</th><th>回答数</th><th>时间</th></tr>
+      {% for question in questions %}
+      <tr>
+        <td><a href="{{ url_for('qa.detail', question_id=question['id']) }}">{{ question['title'] }}</a>
+          {% if question['status'] == 'closed' %}<span class="tag tag-muted">已关闭</span>{% endif %}</td>
+        <td>{{ question['author'] }}</td>
+        <td>{{ question['n_answers'] }}</td>
+        <td>{{ question['created_at'] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% else %}
+  <p class="muted">还没有提问，快来提第一个问题吧。</p>
+{% endif %}
+{% endblock %}
